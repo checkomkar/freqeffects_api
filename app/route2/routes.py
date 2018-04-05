@@ -68,3 +68,40 @@ def register():
 		return dumps(user)
 
 
+@mod.route('/resetpw', methods=['GET', 'POST'])
+def reset():
+	if request.method == 'GET':		
+		ret = mongo.db.users.find({})
+		print(ret)
+		return dumps(ret)
+
+	if request.method == 'POST':
+		try:
+			content = request.json
+			print(content)		
+			# content['password'] = bcrypt.hashpw(content['password'].encode('utf-8'), bcrypt.gensalt(14))
+			mongo.db.users.update_one(content['username'], {'$set': {'password': bcrypt.hashpw(content['password'].encode('utf-8'), bcrypt.gensalt(14))}})
+			user = mongo.db.users.find({"username": content['username']})		
+			return dumps(user)
+
+@mod.route('/changepw', methods=['GET', 'POST'])
+def reset():
+	if request.method == 'GET':		
+		ret = mongo.db.users.find({})
+		print(ret)
+		return dumps(ret)
+
+	if request.method == 'POST':
+		try:
+			content = request.json
+			print(content)
+			user = ast.literal_eval(dumps(mongo.db.users.find({"username": content['username']})))
+			res = None	
+			# content['password'] = bcrypt.hashpw(content['password'].encode('utf-8'), bcrypt.gensalt(14))
+			if bcrypt.hashpw(content['oldPassword'].encode('utf-8'), user[0]['password']) == user[0]['password']:				
+				mongo.db.users.update_one(content['username'], {'$set': {'password': bcrypt.hashpw(content['newPassword'].encode('utf-8'), bcrypt.gensalt(14))}})
+				userres = mongo.db.users.find({"username": content['username']})	
+				res = {'success': True, 'msg': userres}				
+			else:
+				res = {'success': False, 'msg': 'Invalid old password'}				
+			return dumps(res)
